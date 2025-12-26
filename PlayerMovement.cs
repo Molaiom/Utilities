@@ -1,52 +1,53 @@
 using UnityEngine;
 
-[RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(Rigidbody))]
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] private float movementSpeed;
-    [SerializeField] private float cameraSensitivity;
-    [SerializeField] private float cameraMaxAngle = 80;
-    [SerializeField] private Transform cameraTransform;
-    private float verticalRotation = 0;
-    private CharacterController characterController;
+	[SerializeField] private float movementSpeed = 10;
+	[SerializeField] private float cameraSensitivity = 1;
+	[SerializeField] private float cameraMaxAngle = 80;
+	[SerializeField] private Transform cameraTransform;
+	private float verticalRotation = 0;
+	private Rigidbody playerRigidbody;
 
-    void Awake()
-    {
-        characterController = GetComponent<CharacterController>();
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-    }
+	void Awake()
+	{
+		playerRigidbody = GetComponent<Rigidbody>();
+		Cursor.lockState = CursorLockMode.Locked;
+		Cursor.visible = false;
+	}
 
-    void FixedUpdate()
-    {
-        MoveCharacter();
-    }
+	void FixedUpdate()
+	{
+		MoveCharacter();
+	}
 
-    private void Update()
-    {
-        RotateCamera();
-    }
+	private void Update()
+	{
+		RotateCamera();
+	}
 
-    private void MoveCharacter()
-    {
-        float movement1 = Input.GetAxis("Horizontal");
-        float movement2 = Input.GetAxis("Vertical");
+	private void MoveCharacter()
+	{
+		Vector3 verticalInput = Input.GetAxis("Vertical") * transform.forward;
+		Vector3 horizontalInput = Input.GetAxis("Horizontal") * transform.right;
 
-        Vector3 Move = new(movement1, 0, movement2);
-        Move = transform.rotation * Move;
-        characterController.SimpleMove(Move * movementSpeed);
-    }
+		Vector3 movementInput = verticalInput + horizontalInput;
+		if (movementInput.magnitude > 1)
+			movementInput.Normalize();
 
-    private void RotateCamera()
-    {
-        // HORIZONTAL ROTATION
-        float rotateHorizontal = Input.GetAxis("Mouse X") * cameraSensitivity;
-        transform.Rotate(0, rotateHorizontal, 0);
+		playerRigidbody.MovePosition(playerRigidbody.position + (movementInput * movementSpeed * Time.deltaTime));
+	}
 
-        // VERTICAL ROTATION
-        verticalRotation -= Input.GetAxis("Mouse Y") * cameraSensitivity;
-        verticalRotation = Mathf.Clamp(verticalRotation, -cameraMaxAngle, cameraMaxAngle);
-        cameraTransform.localRotation = Quaternion.Euler(verticalRotation, 0, 0);
-    }
+	private void RotateCamera()
+	{
+		// HORIZONTAL ROTATION
+		float rotateHorizontal = Input.GetAxis("Mouse X") * cameraSensitivity;
+		transform.Rotate(0, rotateHorizontal, 0);
+
+		// VERTICAL ROTATION
+		verticalRotation -= Input.GetAxis("Mouse Y") * cameraSensitivity;
+		verticalRotation = Mathf.Clamp(verticalRotation, -cameraMaxAngle, cameraMaxAngle);
+		cameraTransform.localRotation = Quaternion.Euler(verticalRotation, 0, 0);
+	}
 }
-
