@@ -16,6 +16,8 @@ public class ThirdPersonMovement : MonoBehaviour
 
 	[Header("Jump / ground check attributes")]
 	[SerializeField] private float jumpForce = 7;
+	[Tooltip("How fast will this character fall")]
+	[SerializeField] private float smoothFallForce = 20f;
 	[SerializeField] private float groundCheckOffset = 0.65f;
 	[SerializeField] private float groundCheckRadius = 0.45f;
 	[SerializeField] private LayerMask groundCheckLayers;
@@ -26,14 +28,14 @@ public class ThirdPersonMovement : MonoBehaviour
 	private Vector2 moveInputValue;
 	private Vector2 lookInputValue;
 
-	private Rigidbody playerRigidbody;
+	private Rigidbody characterRigidbody;
 	private float cameraXAngle = 0;
 	private float cameraYAngle = 0;
 	private bool isGrounded;
 
 	private void Awake()
 	{
-		playerRigidbody = GetComponent<Rigidbody>();
+		characterRigidbody = GetComponent<Rigidbody>();
 		moveInputAction = InputSystem.actions.FindAction("Move");
 		lookInputAction = InputSystem.actions.FindAction("Look");
 		jumpInputAction = InputSystem.actions.FindAction("Jump");
@@ -55,6 +57,7 @@ public class ThirdPersonMovement : MonoBehaviour
 	{
 		MoveCharacter();
 		GroundCheck();
+		SmoothFall();
 	}
 
 	private void Update()
@@ -68,6 +71,7 @@ public class ThirdPersonMovement : MonoBehaviour
 	private void LateUpdate()
 	{
 		RotateCamera();
+
 	}
 
 	private void MoveCharacter()
@@ -75,19 +79,18 @@ public class ThirdPersonMovement : MonoBehaviour
 		if (moveInputValue.magnitude <= 0)
 			return;
 
+		// Moves relative to the shoulder/camera rotation
 		Vector3 moveDirection = moveInputValue.y * shoulderTransform.forward + moveInputValue.x * shoulderTransform.right;
 		moveDirection.y = 0;
-		playerRigidbody.MovePosition(playerRigidbody.position + (moveDirection * movementSpeed * Time.deltaTime));
+		moveDirection.Normalize();
+		characterRigidbody.MovePosition(characterRigidbody.position + (moveDirection * movementSpeed * Time.deltaTime));
 
-		RotateCharacter(moveDirection);
+		RotateCharacter(ref moveDirection);
 	}
 
-	private void RotateCharacter(Vector3 rotateDirection)
+	private void RotateCharacter(ref Vector3 rotateDirection)
 	{
-		if (playerRigidbody.linearVelocity.magnitude > 0 && moveInputValue.magnitude > 0)
-		{
-			transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(rotateDirection, Vector3.up), turningSpeed * Time.deltaTime);
-		}
+		transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(rotateDirection, Vector3.up), turningSpeed * Time.deltaTime);
 	}
 
 	private void RotateCamera()
@@ -114,7 +117,14 @@ public class ThirdPersonMovement : MonoBehaviour
 	private void Jump()
 	{
 		if (isGrounded)
-			playerRigidbody.AddForceAtPosition(new Vector3(0, jumpForce, 0), Vector3.up, ForceMode.Impulse);
+			characterRigidbody.AddForceAtPosition(new Vector3(0, jumpForce, 0), Vector3.up, ForceMode.Impulse);
+	}
+
+	private void SmoothFall()
+	{
+		// Makes the character fall faster so it doesn't feel "floaty" when jumping
+		if (!isGrounded && characterRigidbody.linearVelocity.y < 0)
+			characterRigidbody.AddForce(Vector3.down * smoothFallForce, ForceMode.Acceleration);
 	}
 
 	#region Gizmos
