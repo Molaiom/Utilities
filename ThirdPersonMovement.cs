@@ -82,7 +82,7 @@ public class ThirdPersonMovement : MonoBehaviour
 		if (moveInputValue.magnitude > 0)
 		{
 			moveDirection = (moveInputValue.y * transform.forward + moveInputValue.x * transform.right).normalized;
-			RotateCharacter(ref moveDirection);
+			RotateCharacter(moveDirection);
 		}
 		// Reduce the player speed to prevent "sliding"
 		else if (moveInputValue.magnitude <= 0 && isGrounded)
@@ -93,8 +93,9 @@ public class ThirdPersonMovement : MonoBehaviour
 		characterRigidbody.AddForce(moveDirection * movementSpeed * Time.deltaTime, ForceMode.VelocityChange);
 	}
 
-	private void RotateCharacter(ref Vector3 rotateDirection)
+	private void RotateCharacter(Vector3 rotateDirection)
 	{
+		rotateDirection.y = 0;
 		transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(rotateDirection, Vector3.up), turningSpeed * Time.deltaTime);
 	}
 
@@ -142,4 +143,5 @@ public class ThirdPersonMovement : MonoBehaviour
 
 	#endregion
 }
+
 
