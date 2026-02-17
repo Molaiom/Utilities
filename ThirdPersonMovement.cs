@@ -5,17 +5,17 @@ using UnityEngine.InputSystem;
 public class ThirdPersonMovement : MonoBehaviour
 {
 	[SerializeField] private InputActionAsset InputActions;
-	[SerializeField] private float movementSpeed = 10;
-	[SerializeField] private float turningSpeed = 10;
+	[SerializeField] private float movementSpeed = 15f;
+	[SerializeField] private float turningSpeed = 10f;
 
 	[Header("Camera attributes")]
 	[Tooltip("The object the camera will follow and rotate with")]
 	[SerializeField] private Transform shoulderTransform;
 	[SerializeField] private float cameraSensitivity = 0.2f;
-	[SerializeField] private float maxCameraAngle = 70;
+	[SerializeField] private float maxCameraAngle = 70f;
 
 	[Header("Jump / ground check attributes")]
-	[SerializeField] private float jumpForce = 7;
+	[SerializeField] private float jumpForce = 7f;
 	[Tooltip("How fast will this character fall")]
 	[SerializeField] private float smoothFallForce = 20f;
 	[SerializeField] private float groundCheckOffset = 0.65f;
@@ -29,8 +29,8 @@ public class ThirdPersonMovement : MonoBehaviour
 	private Vector2 lookInputValue;
 
 	private Rigidbody characterRigidbody;
-	private float cameraXAngle = 0;
-	private float cameraYAngle = 0;
+	private float cameraXAngle = 0f;
+	private float cameraYAngle = 0f;
 	private bool isGrounded;
 
 	private void Awake()
@@ -75,17 +75,22 @@ public class ThirdPersonMovement : MonoBehaviour
 	}
 
 	private void MoveCharacter()
-	{
-		if (moveInputValue.magnitude <= 0)
-			return;
+	{	
+		Vector3 moveDirection = Vector3.zero;
 
-		// Moves relative to the shoulder/camera rotation
-		Vector3 moveDirection = moveInputValue.y * shoulderTransform.forward + moveInputValue.x * shoulderTransform.right;
+		// Move the player relative to the should/camera
+		if (moveInputValue.magnitude > 0)
+		{
+			moveDirection = (moveInputValue.y * transform.forward + moveInputValue.x * transform.right).normalized;
+			RotateCharacter(ref moveDirection);
+		}
+		// Reduce the player speed to prevent "sliding"
+		else if (moveInputValue.magnitude <= 0 && isGrounded)
+			moveDirection = -characterRigidbody.linearVelocity;
+
+		
 		moveDirection.y = 0;
-		moveDirection.Normalize();
-		characterRigidbody.MovePosition(characterRigidbody.position + (moveDirection * movementSpeed * Time.deltaTime));
-
-		RotateCharacter(ref moveDirection);
+		characterRigidbody.AddForce(moveDirection * movementSpeed * Time.deltaTime, ForceMode.VelocityChange);
 	}
 
 	private void RotateCharacter(ref Vector3 rotateDirection)
@@ -137,3 +142,4 @@ public class ThirdPersonMovement : MonoBehaviour
 
 	#endregion
 }
+
