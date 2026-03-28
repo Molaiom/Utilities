@@ -81,21 +81,24 @@ public class ThirdPersonMovement : MonoBehaviour
 		// Move the player when an input is pressed
 		if (moveInputValue.magnitude > 0)
 		{
-			moveDirection = (moveInputValue.y * shoulderTransform.forward + moveInputValue.x * shoulderTransform.right).normalized;
+			moveDirection = (moveInputValue.y * shoulderTransform.forward + moveInputValue.x * shoulderTransform.right);
+			moveDirection.y = 0;
+			moveDirection.Normalize();
 			RotateCharacter(ref moveDirection);
 		}
-
 		// Reduce the player speed when no input is pressed to prevent "sliding"
 		else if (moveInputValue.magnitude <= 0)
 		{
 			if (isGrounded)
+			{
 				moveDirection = -characterRigidbody.linearVelocity;
+				moveDirection.y = 0;
+			}
 			else
 				return;
 		}
 
-		moveDirection.y = 0;
-		characterRigidbody.AddForce(moveDirection * movementSpeed * Time.deltaTime, ForceMode.VelocityChange);	
+		characterRigidbody.AddForce(moveDirection * movementSpeed * Time.deltaTime, ForceMode.VelocityChange);
 	}
 
 	private void RotateCharacter(Vector3 rotateDirection)
